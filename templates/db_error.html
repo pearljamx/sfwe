@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据库未连接</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="login-screen">
+  <main class="login-card db-card">
+    <h1>数据库未连接</h1>
+    <p>{{ message }}</p>
+    <p>请先确认项目根目录已经复制 <code>.env.example</code> 为 <code>.env</code>，并把 <code>MYSQL_USER</code>、<code>MYSQL_PASSWORD</code>、<code>MYSQL_DATABASE</code> 改成当前电脑自己的 MySQL 配置。</p>
+    <p>如果错误里出现 <code>Access denied for user</code>，通常是 MySQL 用户名或密码不正确，或者该用户没有创建/访问数据库的权限。</p>
+    <p>修改 <code>.env</code> 后执行 <code>python init_db.py</code> 创建并初始化数据库，然后重新启动 <code>python app.py</code>。</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tools-row">
+  <button class="chip active" type="button" data-order-filter="">全部订单</button>
+  {% for row in data.status_counts %}
+  <button class="chip" type="button" data-order-filter="{{ row.status }}">{{ status_label(row.status) }} {{ row.count }}</button>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <div class="table-like order-table">
+    <div class="table-head">
+      <span>订单编号</span>
+      <span>养殖池</span>
+      <span>采购明细</span>
+      <span>数量</span>
+      <span>金额</span>
+      <span>状态</span>
+      <span>操作</span>
+    </div>
+    {% for order in data.orders %}
+    <div data-status="{{ order.status }}">
+      <strong>{{ order.order_no }}</strong>
+      <span>{{ order.pond_name }}</span>
+      <span>{{ order["items"] or "未配置明细" }}</span>
+      <span>{{ order.total_quantity }} 尾</span>
+      <span>{{ order.total_amount }} 元</span>
+      <span class="status {{ order.status }}">{{ status_label(order.status) }}</span>
+      {% if order.next_status %}
+      <button class="primary" type="button" data-order-status="{{ order.id }}" data-next-status="{{ order.next_status }}">{{ order.action_label }}</button>
+      {% else %}
+      <span class="muted">{{ order.action_label }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

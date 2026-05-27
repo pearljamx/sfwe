@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel hardware-hero">
+  <div>
+    <p class="eyebrow">UDP Ingest Console</p>
+    <h2>UDP 热点接收、鱼池路由和告警联动集中控制</h2>
+    <p>ESP8266 通过 UDP 上报 DATA 数据帧后，系统按鱼池接收开关同步写入历史水质记录，并自动刷新传感器心跳和水质告警。</p>
+  </div>
+  <div class="hardware-actions">
+    <button class="primary" id="hardwareStartBtn" type="button">启动接收</button>
+    <button class="soft-button" id="hardwareStopBtn" type="button">停止接收</button>
+  </div>
+</section>
+
+<section class="hardware-strip">
+  <article class="hardware-stat">
+    <small>运行状态</small>
+    <div class="row-between">
+      <strong data-hardware-field="running_label">{{ "运行中" if data.hardware.running else "已停止" }}</strong>
+      <span class="status {{ 'running' if data.hardware.running else 'offline' }}" data-hardware-state-badge>
+        {{ "运行中" if data.hardware.running else "未启动" }}
+      </span>
+    </div>
+  </article>
+  <article class="hardware-stat">
+    <small>监听地址</small>
+    <strong data-hardware-field="bind_host">{{ data.hardware.bind_host }}</strong>
+    <span data-hardware-field="mode">{{ data.hardware.mode|upper }}</span>
+  </article>
+  <article class="hardware-stat">
+    <small>监听端口</small>
+    <strong data-hardware-field="bind_port">{{ data.hardware.bind_port }}</strong>
+    <span data-hardware-field="encoding">{{ data.hardware.encoding }}</span>
+  </article>
+  <article class="hardware-stat">
+    <small>备用端口</small>
+    <strong data-hardware-field="command_port">{{ data.hardware.command_port }}</strong>
+    <span>无来源端口时使用</span>
+  </article>
+  <article class="hardware-stat">
+    <small>累计包数</small>
+    <strong data-hardware-field="total_packets">{{ data.hardware.total_packets }}</strong>
+    <span>成功 <b data-hardware-field="parsed_packets">{{ data.hardware.parsed_packets }}</b></span>
+  </article>
+  <article class="hardware-stat">
+    <small>最近发送端</small>
+    <strong data-hardware-field="last_sender">{{ (data.hardware.last_sender_ip ~ ':' ~ data.hardware.last_sender_port) if data.hardware.last_sender_ip else '--' }}</strong>
+    <span>启用鱼池 <b data-hardware-field="enabled_ponds">{{ data.hardware.enabled_ponds }}</b></span>
+  </article>
+  <article class="hardware-stat">
+    <small>最后一包</small>
+    <strong data-hardware-field="last_packet_time">{{ data.hardware.last_packet_time or "--" }}</strong>
+    <span>错误 <b data-hardware-field="error_count">{{ data.hardware.error_count }}</b></span>
+  </article>
+</section>
+
+<section class="panel hardware-preview-panel">
+  <div class="hardware-preview">
+    <div>
+      <small>最近文本预览</small>
+      <p data-hardware-field="last_text_preview">{{ data.hardware.last_text_preview or "等待硬件数据" }}</p>
+    </div>
+    <div>
+      <small>最近十六进制预览</small>
+      <p data-hardware-field="last_hex_preview">{{ data.hardware.last_hex_preview or "暂无" }}</p>
+    </div>
+    <div>
+      <small>最近错误</small>
+      <p data-hardware-field="last_error">{{ data.hardware.last_error or "无" }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="tools-row">
+  <input class="search-input" data-search=".pond-card" placeholder="搜索鱼池、品种或区域">
+  <select id="pondMetric">
+    {% for key, name, unit in data.parameters %}<option value="{{ key }}">{{ name }}</option>{% endfor %}
+  </select>
+</section>
+
+<section class="split-grid">
+  <div class="panel">
+    <div class="panel-head"><h3>鱼池接收清单</h3><span>{{ data.ponds|length }} 座</span></div>
+    <div class="pond-list">
+      {% for pond in data.ponds %}
+      <article class="pond-card pond-card-detailed" data-name="{{ pond.pond_name }} {{ pond.fish_type }} {{ pond.location }}">
+        <div class="card-top">
+          <strong>{{ pond.pond_name }}</strong>
+          <span class="status {{ pond.status }}">{{ status_label(pond.status) }}</span>
+        </div>
+        <p class="muted">{{ pond.location }} · {{ pond.fish_type }} · {{ pond.fish_count }} 尾</p>
+        <div class="pond-control-row">
+          <label class="hardware-toggle">
+            <input
+              type="checkbox"
+              data-hardware-toggle="{{ pond.pond_id }}"
+              {% if pond.hardware_ingest_enabled %}checked{% endif %}
+            >
+            <span></span>
+            <em data-toggle-label>{{ "已接收硬件数据" if pond.hardware_ingest_enabled else "未接收硬件数据" }}</em>
+          </label>
+          <span class="status {{ pond.sensor_work_state or pond.sensor_status or 'offline' }}">
+            {{ status_label(pond.sensor_work_state or pond.sensor_status or "offline") }}
+          </span>
+        </div>
+        <div class="pond-reading-grid">
+          <span>水温<b>{{ pond.temperature if pond.temperature is not none else "--" }}</b><small>degC</small></span>
+          <span>pH<b>{{ pond.ph_value if pond.ph_value is not none else "--" }}</b><small></small></span>
+          <span>食物值<b>{{ pond.food_value if pond.food_value is not none else "--" }}</b><small></small></span>
+          <span>盐度<b>{{ pond.salinity if pond.salinity is not none else "--" }}</b><small>ppt</small></span>
+          <span>溶氧<b>{{ pond.dissolved_oxygen if pond.dissolved_oxygen is not none else "--" }}</b><small>mg/L</small></span>
+          <span>氨氮<b>{{ pond.ammonia_nitrogen if pond.ammonia_nitrogen is not none else "--" }}</b><small>mg/L</small></span>
+          <span>亚硝酸盐<b>{{ pond.nitrite_nitrogen if pond.nitrite_nitrogen is not none else "--" }}</b><small>mg/L</small></span>
+        </div>
+        <div class="risk-bar" style="--risk:{{ pond.risk_score }}%"><i></i></div>
+        <div class="pond-card-footer">
+          <span>最近记录 {{ pond.recorded_at or "--" }}</span>
+          <span>传感器心跳 {{ pond.sensor_last_active or "--" }}</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>多参数趋势</h3><span class="muted">最近记录</span></div>
+    <div class="chart tall" id="pondTrendChart"></div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+window.pondTrends = {{ data.trend|tojson }};
+window.hardwareStatus = {{ data.hardware|tojson }};
+</script>
+{% endblock %}

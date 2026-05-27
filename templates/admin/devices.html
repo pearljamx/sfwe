@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="tools-row">
+  <select data-device-filter>
+    <option value="">全部设备</option>
+    <option value="aerator">增氧机</option>
+    <option value="pump">水泵</option>
+    <option value="feeder">投喂机</option>
+    <option value="camera">摄像头</option>
+    <option value="sensor">传感器</option>
+  </select>
+  <button class="primary" type="button" data-demo-toast="设备控制按钮将通过 UDP 真实下发 CMD 指令">指令说明</button>
+</section>
+<section class="device-grid">
+  {% for device in data.devices %}
+  <article class="device-card" data-type="{{ device.device_type }}">
+    <div class="card-top"><strong>{{ device.device_name }}</strong><span class="status {{ device.status }}">{{ status_label(device.status) }}</span></div>
+    <p class="muted">{{ device.pond_name }} · {{ type_label(device.device_type) }} · {{ device.power_consumption }}W</p>
+    <div class="device-meta">
+      <span>工作状态 <b>{{ status_label(device.work_state) }}</b></span>
+      <span>心跳 <b>{{ device.last_active or "--" }}</b></span>
+    </div>
+    <div class="device-actions">
+      {% if device.device_type in ['pump', 'aerator', 'feeder'] %}
+      <button class="primary" data-device-command="{{ device.id }}" data-action="start">启动</button>
+      <button class="icon-button" data-device-command="{{ device.id }}" data-action="stop">停止</button>
+      <button class="icon-button" data-device-command="{{ device.id }}" data-action="toggle">切换</button>
+      {% if device.device_type == 'feeder' %}
+      <button class="icon-button" data-device-command="{{ device.id }}" data-action="feed">投喂</button>
+      {% endif %}
+      {% else %}
+      <button class="icon-button full" type="button" data-demo-toast="该设备当前没有对应的 UDP 控制指令">暂无下发</button>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+<section class="panel">
+  <div class="panel-head"><h3>设备操作日志</h3></div>
+  <div class="table-like">
+    {% for log in data.logs %}
+    <div><span>{{ log.log_time }}</span><strong>{{ log.device_name }}</strong><span>{{ log.action }}</span><span>{{ log.operator }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

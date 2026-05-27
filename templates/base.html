@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "智慧渔场物联网管控系统" }}</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+</head>
+<body data-page="{{ page or '' }}">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span class="brand-mark">SF</span>
+      <span>
+        <strong>智慧渔场</strong>
+        <small>IoT Operations</small>
+      </span>
+    </a>
+    <nav class="nav">
+      {% for label, endpoint, icon in nav_items %}
+        <a class="{{ 'active' if page == endpoint else '' }}" href="{{ url_for(endpoint) }}">
+          <span>{{ icon }}</span>{{ label }}
+        </a>
+      {% endfor %}
+    </nav>
+    <div class="side-status">
+      <span class="pulse {{ 'on' if db_connected else 'off' }}"></span>
+      <span>{{ db_name }} 数据库</span>
+    </div>
+  </aside>
+
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">智慧渔场物联网管控系统</p>
+        <h1>{{ title }}</h1>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="refreshBtn" type="button">刷新</button>
+        <span class="user-chip">{{ current_user.full_name or current_user.username }} · {{ role_label(current_user.role) }}</span>
+        <a class="ghost-link" href="{{ url_for('logout') }}">退出</a>
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

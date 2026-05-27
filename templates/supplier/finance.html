@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="metric-grid finance-metrics">
+  <article class="metric-card"><small>销售额</small><strong>{{ data.revenue }}</strong><span>元</span></article>
+  <article class="metric-card"><small>成本</small><strong>{{ data.cost }}</strong><span>元</span></article>
+  <article class="metric-card"><small>利润</small><strong>{{ data.profit }}</strong><span>元</span></article>
+  <article class="metric-card"><small>待结算</small><strong>{{ data.receivable }}</strong><span>元</span></article>
+  <article class="metric-card"><small>结算率</small><strong>{{ data.settled_rate }}</strong><span>%</span></article>
+  <article class="metric-card"><small>平均客单价</small><strong>{{ data.avg_order }}</strong><span>元</span></article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel wide-panel">
+    <div class="panel-head"><h3>收入与利润</h3><span class="muted">来自 SFweb 财务流水</span></div>
+    <div class="chart tall" id="financeChart"></div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head"><h3>结算概况</h3></div>
+    <div class="status-board">
+      {% for row in data.status_summary %}
+      <div>
+        <span class="status {{ row.status }}">{{ status_label(row.status) }}</span>
+        <strong>{{ row.amount }} 元</strong>
+        <small>{{ row.count }} 笔</small>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head"><h3>近期流水</h3></div>
+    <div class="list">
+      {% for item in data.recent %}
+      <div class="list-item">
+        <div class="row-between">
+          <strong>{{ item.order_no or "手工流水" }}</strong>
+          <span class="status {{ item.status }}">{{ status_label(item.status) }}</span>
+        </div>
+        <p class="muted">{{ type_label(item.transaction_type) }} · {{ item.amount }} 元 · {{ item.occurred_at }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.financeData = {{ {"series": data.series}|tojson }};</script>
+{% endblock %}

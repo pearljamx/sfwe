@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="dashboard-grid">
+  <article class="panel wide-panel">
+    <div class="panel-head"><h3>自动控制策略</h3><button class="primary" data-demo-toast="策略已写入数据库，可继续扩展为新增表单">新增策略</button></div>
+    <div class="rule-list">
+      {% for rule in data.rules %}
+      <article class="rule-row">
+        <div class="row-between"><strong>{{ rule.rule_name }}</strong><span class="status {{ 'running' if rule.is_active else 'standby' }}">{{ '启用' if rule.is_active else '停用' }}</span></div>
+        <p class="muted">{{ rule.pond_name }} · {{ rule.trigger_type }} {{ rule.trigger_condition }} · {{ rule.action_type }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h3>执行依据</h3></div>
+    <div class="list">
+      {% for threshold in data.thresholds %}
+      <div class="list-item"><strong>{{ threshold.parameter_name }}</strong><p class="muted">{{ threshold.min_value }} - {{ threshold.max_value }} {{ threshold.unit }}</p></div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

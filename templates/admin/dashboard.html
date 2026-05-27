@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero-band">
+  <div>
+    <p class="eyebrow">Live Command Center</p>
+    <h2>水质、设备、告警、AI 识别统一联动</h2>
+    <p>本系统面向真实水产养殖场景，融合物联网水质感知、设备远程调度、AI 鱼病识别与供应链协同管理，形成从监测、预警到处置的智慧渔场闭环管控方案。</p>
+  </div>
+  <a class="primary" href="{{ url_for('export_water_quality') }}">导出水质 CSV</a>
+</section>
+
+<section class="metric-grid">
+  {% for item in data.stats %}
+    <article class="metric-card"><small>{{ item.label }}</small><strong>{{ item.value }}</strong><span>{{ item.unit }}</span></article>
+  {% endfor %}
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel wide-panel">
+    <div class="panel-head">
+      <h3>鱼池风险矩阵</h3>
+      <div class="toolbar">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="risk">高风险</button>
+        <button class="chip" data-filter="normal">正常</button>
+      </div>
+    </div>
+    <div class="pond-grid">
+      {% for pond in data.ponds %}
+      <article class="pond-card pond-card-detailed" data-risk="{{ 'risk' if pond.risk_score >= 50 else 'normal' }}">
+        <div class="card-top">
+          <strong>{{ pond.pond_name }}</strong>
+          <span class="status {{ pond.status }}">{{ status_label(pond.status) }}</span>
+        </div>
+        <p class="muted">{{ pond.location }} · {{ pond.fish_type }} · {{ pond.fish_count }} 尾</p>
+        <div class="pond-reading-grid">
+          <span>水温<b>{{ pond.temperature if pond.temperature is not none else "--" }}</b><small>degC</small></span>
+          <span>pH<b>{{ pond.ph_value if pond.ph_value is not none else "--" }}</b><small></small></span>
+          <span>食物值<b>{{ pond.food_value if pond.food_value is not none else "--" }}</b><small></small></span>
+          <span>盐度<b>{{ pond.salinity if pond.salinity is not none else "--" }}</b><small>ppt</small></span>
+          <span>溶氧<b>{{ pond.dissolved_oxygen if pond.dissolved_oxygen is not none else "--" }}</b><small>mg/L</small></span>
+          <span>氨氮<b>{{ pond.ammonia_nitrogen if pond.ammonia_nitrogen is not none else "--" }}</b><small>mg/L</small></span>
+          <span>亚硝酸盐<b>{{ pond.nitrite_nitrogen if pond.nitrite_nitrogen is not none else "--" }}</b><small>mg/L</small></span>
+        </div>
+        <div class="risk-bar" style="--risk:{{ pond.risk_score }}%"><i></i></div>
+        <div class="pond-card-footer">
+          <span>最近记录 {{ pond.recorded_at or "--" }}</span>
+          <span>传感器 {{ status_label(pond.sensor_work_state or pond.sensor_status or "offline") }}</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h3>水温趋势</h3><span class="muted">数据库聚合</span></div>
+    <div class="chart" id="temperatureChart"></div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h3>待处理告警</h3><a href="{{ url_for('admin_alerts') }}">进入处置</a></div>
+    <div class="list">
+      {% for alert in data.alerts %}
+      <div class="list-item">
+        <div class="row-between"><strong>{{ alert.pond_name or "全场" }}</strong><span class="status {{ alert.severity }}">{{ status_label(alert.severity) }}</span></div>
+        <p>{{ alert.message }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h3>AI 识别动态</h3><a href="{{ url_for('admin_ai') }}">查看</a></div>
+    <div class="list">
+      {% for item in data.ai %}
+      <div class="list-item">
+        <div class="row-between"><strong>{{ item.disease_name }}</strong><b>{{ (item.confidence * 100)|round|int }}%</b></div>
+        <p class="muted">{{ item.pond_name }} · {{ item.created_at }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="showcase-grid">
+  <article class="panel">
+    <div class="panel-head"><h3>系统亮点</h3></div>
+    <div class="feature-list">
+      <span>数字孪生映射</span>
+      <span>UDP 热点通信</span>
+      <span>昇腾边缘 AI</span>
+      <span>双角色供应链协同</span>
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h3>业务闭环</h3></div>
+    <div class="flow-steps">
+      <span>数据采集</span>
+      <i></i>
+      <span>阈值判断</span>
+      <i></i>
+      <span>告警处置</span>
+      <i></i>
+      <span>设备联动</span>
+    </div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+window.pageCharts = {
+  temperatureChart: {
+    type: "line",
+    title: "水温",
+    labels: {{ data.trend["labels"]|tojson }},
+    values: {{ data.trend["values"]|tojson }}
+  }
+};
+</script>
+{% endblock %}
